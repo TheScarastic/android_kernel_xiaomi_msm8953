@@ -10,8 +10,8 @@
  * GNU General Public License for more details.
  */
 
-#include <mhi_sys.h>
-#include <mhi.h>
+#include "mhi_sys.h"
+#include "mhi.h"
 #include <mhi_bhi.h>
 #include <mhi_hwio.h>
 
