@@ -20,7 +20,7 @@
 	model = "Qualcomm Technologies, Inc. MSM8953 + PMI8950 QRD SKU3";
 	compatible = "qcom,msm8953-qrd-sku3",
 		   "qcom,msm8953-qrd", "qcom,msm8953", "qcom,qrd";
-	qcom,board-id= <0x2000b 0>;
+	qcom,board-id= <0x0b 0>;
 };
 
 &soc {

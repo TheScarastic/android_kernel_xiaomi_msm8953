@@ -241,11 +241,21 @@
 	status = "ok";
 };
 
-&pm8953_typec {
-	ss-mux-supply = <&pm8953_l13>;
-	qcom,ssmux-gpio = <&tlmm 139 GPIO_ACTIVE_HIGH>;
-	pinctrl-names = "default";
-	pinctrl-0 = <&typec_ssmux_config>;
+
+/{
+	mtp_batterydata: qcom,battery-data {
+		qcom,batt-id-range-pct = <15>;
+		#include "batterydata-itech-3000mah.dtsi"
+		#include "batterydata-ascent-3450mAh.dtsi"
+	};
+};
+
+&pmi8950_fg {
+	qcom,battery-data = <&mtp_batterydata>;
+};
+
+&pmi8950_charger {
+	qcom,battery-data = <&mtp_batterydata>;
 };
 
 &pm8953_gpios {
