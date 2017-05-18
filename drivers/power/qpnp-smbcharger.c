@@ -1,4 +1,5 @@
 /* Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (C) 2017 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -1074,6 +1075,21 @@ static int get_prop_batt_capacity(struct smbchg_chip *chip)
 		capacity = DEFAULT_BATT_CAPACITY;
 	}
 	return capacity;
+}
+
+static int get_prop_battery_charge_full_design(struct smbchg_chip *chip)
+{
+	union power_supply_propval ret = {0,};
+
+		if (chip->bms_psy) {
+			chip->bms_psy->get_property(chip->bms_psy,
+				  POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN, &ret);
+			return ret.intval;
+		} else {
+			pr_debug("No BMS supply registered return 0\n");
+		}
+
+		return 0;
 }
 
 #define DEFAULT_BATT_TEMP		200
@@ -4896,11 +4912,13 @@ static void handle_usb_removal(struct smbchg_chip *chip)
 {
 	struct power_supply *parallel_psy = get_parallel_psy(chip);
 	int rc;
+
 	if (set_usb_charge_mode_par == 1) {
 		ist30xx_set_ta_mode(0);
 	} else if (set_usb_charge_mode_par == 2) {
 		tpd_usb_plugin(0);
 	}
+printk("set_usb_charge_mode_par off = %d\n", set_usb_charge_mode_par);
 	pr_smb(PR_STATUS, "triggered\n");
 	smbchg_aicl_deglitch_wa_check(chip);
 	/* Clear the OV detected status set before */
@@ -4970,6 +4988,7 @@ static bool is_usbin_uv_high(struct smbchg_chip *chip)
 	return reg &= USBIN_UV_BIT;
 }
 
+static int rerun_apsd(struct smbchg_chip *chip);
 #define HVDCP_NOTIFY_MS		2500
 static void handle_usb_insertion(struct smbchg_chip *chip)
 {
@@ -4984,6 +5003,10 @@ static void handle_usb_insertion(struct smbchg_chip *chip)
 	pr_smb(PR_STATUS, "triggered\n");
 	/* usb inserted */
 	read_usb_type(chip, &usb_type_name, &usb_supply_type);
+	if (usb_supply_type == POWER_SUPPLY_TYPE_USB_CDP || usb_supply_type == POWER_SUPPLY_TYPE_USB) {
+		rc = rerun_apsd(chip);
+		read_usb_type(chip, &usb_type_name, &usb_supply_type);
+	}
 	pr_smb(PR_STATUS,
 		"inserted type = %d (%s)", usb_supply_type, usb_type_name);
 
@@ -6139,6 +6162,7 @@ static enum power_supply_property smbchg_battery_properties[] = {
 	POWER_SUPPLY_PROP_CHARGING_ENABLED,
 	POWER_SUPPLY_PROP_CHARGE_TYPE,
 	POWER_SUPPLY_PROP_CAPACITY,
+	POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN,
 	POWER_SUPPLY_PROP_HEALTH,
 	POWER_SUPPLY_PROP_TECHNOLOGY,
 	POWER_SUPPLY_PROP_SYSTEM_TEMP_LEVEL,
@@ -6319,7 +6343,7 @@ static int smbchg_battery_get_property(struct power_supply *psy,
 		val->intval = get_prop_batt_health(chip);
 		break;
 	case POWER_SUPPLY_PROP_TECHNOLOGY:
-		val->intval = POWER_SUPPLY_TECHNOLOGY_LION;
+		val->intval = POWER_SUPPLY_TECHNOLOGY_LIPO;
 		break;
 	case POWER_SUPPLY_PROP_FLASH_CURRENT_MAX:
 		val->intval = smbchg_calc_max_flash_current(chip);
@@ -6342,6 +6366,9 @@ static int smbchg_battery_get_property(struct power_supply *psy,
 	/* properties from fg */
 	case POWER_SUPPLY_PROP_CAPACITY:
 		val->intval = get_prop_batt_capacity(chip);
+		break;
+	case POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
+		val->intval = get_prop_battery_charge_full_design(chip);
 		break;
 	case POWER_SUPPLY_PROP_CURRENT_NOW:
 		val->intval = get_prop_batt_current_now(chip);
@@ -7612,6 +7639,20 @@ static int smbchg_hw_init(struct smbchg_chip *chip)
 		if (rc < 0)
 			dev_err(chip->dev, "Couldn't set OTG OC config rc = %d\n",
 				rc);
+
+		rc = smbchg_sec_masked_write(chip, chip->otg_base + OTG_CFG, 0x0c, 0x8);
+		if (rc < 0) {
+			dev_err(chip->dev, "Couldn't set SMBCHGL_OTG_CFG rc=%d\n",
+				rc);
+		}
+
+		rc = smbchg_read(chip, &reg, chip->otg_base + OTG_CFG, 1);
+		printk("%s:read OTG_CFG=%2x\n", __func__, reg);
+		if (rc < 0) {
+			dev_err(chip->dev, "Couldn't set SMBCHGL_OTG_CFG rc=%d\n",
+				rc);
+		}
+
 	}
 
 	if (chip->otg_pinctrl) {
@@ -8602,6 +8643,7 @@ static int smbchg_probe(struct spmi_device *spmi)
 		goto votables_cleanup;
 	}
 
+	chip->hvdcp_not_supported = true;
 	rc = smbchg_check_chg_version(chip);
 	if (rc) {
 		pr_err("Unable to check schg version rc=%d\n", rc);
