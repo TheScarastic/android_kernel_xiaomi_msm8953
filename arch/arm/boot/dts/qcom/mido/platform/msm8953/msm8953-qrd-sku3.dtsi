@@ -54,10 +54,6 @@
 	};
 };
 
-&dsi_r69006_1080p_cmd {
-	qcom,esd-check-enabled;
-};
-
 &mdss_mdp {
 	qcom,mdss-pref-prim-intf = "dsi";
 };
@@ -101,14 +97,6 @@
 &dsi_nt35596_tianma_fhd_vid {
 	qcom,panel-supply-entries = <&dsi_panel_pwr_supply>;
 
-};
-
-&dsi_r69006_1080p_cmd {
-	qcom,panel-supply-entries = <&dsi_panel_pwr_supply>;
-};
-
-&dsi_r69006_1080p_video {
-	qcom,panel-supply-entries = <&dsi_panel_pwr_supply>;
 };
 
 &int_codec {
