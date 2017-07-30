@@ -54,10 +54,6 @@
 	};
 };
 
-&dsi_r69006_1080p_cmd {
-	qcom,esd-check-enabled;
-};
-
 &mdss_mdp {
 	qcom,mdss-pref-prim-intf = "dsi";
 };
@@ -71,7 +67,7 @@
 	ibb-supply = <&ibb_regulator>;
 	/delete-property/ vdd-supply;
 
-	qcom,dsi-pref-prim-pan = <&dsi_r69006_1080p_cmd>;
+	qcom,dsi-pref-prim-pan = <&dsi_nt35596_fhd_vid>;
 	pinctrl-names = "mdss_default", "mdss_sleep";
 	pinctrl-0 = <&mdss_dsi_active &mdss_te_active>;
 	pinctrl-1 = <&mdss_dsi_suspend &mdss_te_suspend>;
@@ -88,28 +84,35 @@
 	qpnp,qpnp-labibb-mode = "lcd";
 };
 
-&dsi_r69006_1080p_cmd {
+&dsi_nt35532_fhd_vid {
 	qcom,panel-supply-entries = <&dsi_panel_pwr_supply>;
+
 };
 
-&dsi_r69006_1080p_video {
+&dsi_nt35596_fhd_vid {
 	qcom,panel-supply-entries = <&dsi_panel_pwr_supply>;
+
+};
+
+&dsi_nt35596_tianma_fhd_vid {
+	qcom,panel-supply-entries = <&dsi_panel_pwr_supply>;
+
 };
 
 &int_codec {
-	status = "disabled";
+	status = "ok";
 };
 
 &pm8953_diangu_dig {
-	status = "disabled";
+	status = "ok";
 };
 
 &pm8953_diangu_analog {
-	status = "disabled";
+	status = "ok";
 };
 
 &ext_codec {
-	status = "ok";
+	status = "disabled";
 	qcom,model = "msm8953-sku3-tasha-snd-card";
 
 	qcom,audio-routing =
@@ -136,25 +139,17 @@
 };
 
 &slim_msm {
-	status = "ok";
+	status = "disabled";
 };
 
 &dai_slim {
-	status = "ok";
-};
-
-&wcd9xxx_intc {
-	status = "ok";
+	status = "disabled";
 };
 
 &clock_audio {
-	status = "ok";
+	status = "disabled";
 };
 
 &wcd9335 {
-	status = "ok";
-};
-
-&wcd_rst_gpio {
-	status = "ok";
+	status = "disabled";
 };

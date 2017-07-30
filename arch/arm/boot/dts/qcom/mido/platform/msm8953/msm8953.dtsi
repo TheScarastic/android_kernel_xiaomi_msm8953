@@ -11,7 +11,7 @@
  * GNU General Public License for more details.
  */
 
-#include "skeleton64.dtsi"
+#include "../../../skeleton64.dtsi"
 #include <dt-bindings/clock/msm-clocks-8953.h>
 #include <dt-bindings/regulator/qcom,rpm-smd-regulator.h>
 #include <dt-bindings/gpio/gpio.h>
@@ -34,7 +34,7 @@
 		other_ext_mem: other_ext_region@0 {
 			compatible = "removed-dma-pool";
 			no-map;
-			reg = <0x0 0x85b00000 0x0 0xd00000>;
+			reg = <0x0 0x84A00000 0x0 0x1E00000>;
 		};
 
 		modem_mem: modem_region@0 {
@@ -100,6 +100,14 @@
 			alignment = <0 0x400000>;
 			size = <0 0x800000>;
 		};
+
+		pstore_reserve_mem: pstore_reserve_mem_region@0 {
+			linux,reserve-contiguous-region;
+			linux,reserve-region;
+			linux,remove-completely;
+			reg = <0x0 0x9ff00000 0x0 0x00100000>;
+			label = "pstore_reserve_mem";
+		};
 	};
 
 	aliases {
@@ -128,15 +136,15 @@
 };
 
 #include "msm8953-pinctrl.dtsi"
-#include "msm8953-cpu.dtsi"
-#include "msm8953-gpu.dtsi"
-#include "msm8953-ion.dtsi"
-#include "msm8953-smp2p.dtsi"
-#include "msm-arm-smmu-8953.dtsi"
-#include "msm8953-coresight.dtsi"
-#include "msm8953-bus.dtsi"
-#include "msm8953-iommu-domains.dtsi"
-#include "msm8953-vidc.dtsi"
+#include "../../../msm8953-cpu.dtsi"
+#include "../../../msm8953-gpu.dtsi"
+#include "../../../msm8953-ion.dtsi"
+#include "../../../msm8953-smp2p.dtsi"
+#include "../../../msm-arm-smmu-8953.dtsi"
+#include "../../../msm8953-coresight.dtsi"
+#include "../../../msm8953-bus.dtsi"
+#include "../../../msm8953-iommu-domains.dtsi"
+#include "../../../msm8953-vidc.dtsi"
 #include "msm8953-pm.dtsi"
 
 &soc {
@@ -287,8 +295,10 @@
 		reg-names = "tsens_physical", "tsens_eeprom_physical";
 		interrupts = <0 184 0>, <0 314 0>;
 		interrupt-names = "tsens-upper-lower", "tsens-critical";
-		qcom,sensors = <16>;
-		qcom,slope = <3200 3200 3200 3200 3200 3200 3200 3200 3200
+		qcom,client-id = <1 2 3 4 5 6 7 8 9 10 11 12 13 14 15>;
+		qcom,sensor-id = <1 2 3 4 5 6 7 8 9 10 11 12 13 14 15>;
+		qcom,sensors = <15>;
+		qcom,slope = <3200 3200 3200 3200 3200 3200 3200 3200
 					3200 3200 3200 3200 3200 3200 3200>;
 		qcom,valid-status-check;
 	};
@@ -1212,6 +1222,12 @@
 		reg-names = "fuse-base";
 	};
 
+    	sn_fuse: snfuse@0xa4128 {
+		compatible = "qcom,sn-fuse";
+		reg = <0xa4128 0x4>;
+		reg-names = "sn-base";
+	};
+
 	jtag_mm0: jtagmm@619c000 {
 		compatible = "qcom,jtagv8-mm";
 		reg = <0x619c000 0x1000>,
@@ -1606,9 +1622,9 @@
 		qcom,ce-opp-freq = <100000000>;
 	};
 
-	qcom_seecom: qseecom@85b00000 {
+	qcom_seecom: qseecom@84a00000 {
 		compatible = "qcom,qseecom";
-		reg = <0x85b00000 0x800000>;
+		reg = <0x84a00000 0x1900000>;
 		reg-names = "secapp-region";
 		qcom,hlos-num-ce-hw-instances = <1>;
 		qcom,hlos-ce-hw-instance = <0>;
@@ -1618,6 +1634,7 @@
 		qcom,msm-bus,name = "qseecom-noc";
 		qcom,msm-bus,num-cases = <4>;
 		qcom,msm-bus,num-paths = <1>;
+        qcom,detect-dpdm-floating;
 		qcom,support-bus-scaling;
 		qcom,appsbl-qseecom-support;
 		qcom,msm-bus,vectors-KBps =
@@ -2140,9 +2157,9 @@
 		qcom,vdd-voltage-level = <0 925000 925000>;
 
 		qcom,qusb-phy-init-seq = <0xF8 0x80
-					0xB3 0x84
-					0x83 0x88
-					0xC0 0x8C
+					0x53 0x84
+					0x93 0x88
+					0xCf 0x8C
 					0x14 0x9C
 					0x30 0x08
 					0x79 0x0C
@@ -2293,15 +2310,15 @@
 	};
 };
 
-#include "msm-pm8953-rpm-regulator.dtsi"
-#include "msm-pm8953.dtsi"
-#include "msm8953-regulator.dtsi"
-#include "msm-pmi8950.dtsi"
-#include "msm-audio.dtsi"
+#include "../../../msm-pm8953-rpm-regulator.dtsi"
+#include "../qcom/msm-pm8953.dtsi"
+#include "../../../msm8953-regulator.dtsi"
+#include "../qcom/msm-pmi8950.dtsi"
+#include "../qcom/msm-audio.dtsi"
 #include "msm8953-audio.dtsi"
-#include "msm-gdsc-8916.dtsi"
-#include "msm8953-camera.dtsi"
-#include "msm8953-mdss.dtsi"
+#include "../../../msm-gdsc-8916.dtsi"
+#include "../../../msm8953-camera.dtsi"
+#include "../../../msm8953-mdss.dtsi"
 #include "msm8953-mdss-pll.dtsi"
 
 &gdsc_venus {
