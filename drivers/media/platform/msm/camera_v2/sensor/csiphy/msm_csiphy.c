@@ -483,7 +483,7 @@ static int msm_csiphy_lane_config(struct csiphy_device *csiphy_dev,
 		return rc;
 	}
 
-	clk_rate = ((int)csiphy_params->csiphy_clk > 0)
+	clk_rate = (csiphy_params->csiphy_clk > 0)
 			? csiphy_params->csiphy_clk :
 			csiphy_dev->csiphy_max_clk;
 	clk_rate = msm_camera_clk_set_rate(&csiphy_dev->pdev->dev,
@@ -1209,7 +1209,6 @@ static int32_t msm_csiphy_cmd(struct csiphy_device *csiphy_dev, void *arg)
 			break;
 		}
 		csiphy_dev->csiphy_sof_debug = SOF_DEBUG_DISABLE;
-		csiphy_dev->is_combo_mode = csiphy_params.combo_mode;
 		rc = msm_csiphy_lane_config(csiphy_dev, &csiphy_params);
 		break;
 	case CSIPHY_RELEASE:
@@ -1220,14 +1219,7 @@ static int32_t msm_csiphy_cmd(struct csiphy_device *csiphy_dev, void *arg)
 			rc = -EFAULT;
 			break;
 		}
-		if ((csiphy_dev->is_combo_mode == 1) &&
-			(csiphy_dev->ref_count == 2)) {
-			/*CSIPHY is running in Combo mode do
-			not power down core*/
-			csiphy_dev->ref_count--;
-		} else {
-			rc = msm_csiphy_release(csiphy_dev, &csi_lane_params);
-		}
+		rc = msm_csiphy_release(csiphy_dev, &csi_lane_params);
 		break;
 	default:
 		pr_err("%s: %d failed\n", __func__, __LINE__);
@@ -1337,7 +1329,7 @@ static const struct v4l2_subdev_ops msm_csiphy_subdev_ops = {
 static int msm_csiphy_get_clk_info(struct csiphy_device *csiphy_dev,
 	struct platform_device *pdev)
 {
-	int i, rc = 0;
+	int i, rc;
 	char *csi_3p_clk_name = "csi_phy_3p_clk";
 	char *csi_3p_clk_src_name = "csiphy_3p_clk_src";
 	uint32_t clk_cnt = 0;
@@ -1353,7 +1345,6 @@ static int msm_csiphy_get_clk_info(struct csiphy_device *csiphy_dev,
 	if (csiphy_dev->num_all_clk > CSIPHY_NUM_CLK_MAX) {
 		pr_err("%s: invalid count=%zu, max is %d\n", __func__,
 			csiphy_dev->num_all_clk, CSIPHY_NUM_CLK_MAX);
-		rc = -EINVAL;
 		goto MAX_CLK_ERROR;
 	}
 
@@ -1397,14 +1388,13 @@ static int msm_csiphy_get_clk_info(struct csiphy_device *csiphy_dev,
 	}
 
 	csiphy_dev->num_clk = clk_cnt;
-	return rc;
 MAX_CLK_ERROR:
 	msm_camera_put_clk_info(csiphy_dev->pdev,
 		&csiphy_dev->csiphy_all_clk_info,
 		&csiphy_dev->csiphy_all_clk,
 		csiphy_dev->num_all_clk);
 
-	return rc;
+	return 0;
 }
 
 static int csiphy_probe(struct platform_device *pdev)

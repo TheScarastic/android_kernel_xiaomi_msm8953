@@ -290,6 +290,7 @@ static struct vb2_buffer *msm_vb2_get_buf(int session_id,
 end:
 	spin_unlock_irqrestore(&stream->stream_lock, flags);
 	read_unlock_irqrestore(&session->stream_rwlock, rl_flags);
+
 	return vb2_buf;
 }
 
@@ -336,8 +337,10 @@ static struct vb2_buffer *msm_vb2_get_buf_by_idx(int session_id,
 end:
 	spin_unlock_irqrestore(&stream->stream_lock, flags);
 	read_unlock_irqrestore(&session->stream_rwlock, rl_flags);
+
 	return vb2_buf;
 }
+
 
 static int msm_vb2_put_buf(struct vb2_buffer *vb, int session_id,
 				unsigned int stream_id)

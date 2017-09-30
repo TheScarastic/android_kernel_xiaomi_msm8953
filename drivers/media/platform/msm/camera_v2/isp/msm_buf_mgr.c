@@ -30,7 +30,6 @@
 #include "msm.h"
 #include "msm_buf_mgr.h"
 #include "cam_smmu_api.h"
-#include "msm_isp_util.h"
 
 #undef CDBG
 #define CDBG(fmt, args...) pr_debug(fmt, ##args)
@@ -750,7 +749,6 @@ static int msm_isp_update_put_buf_cnt(struct msm_isp_buf_mgr *buf_mgr,
 	if (-ENOTEMPTY == rc) {
 		pr_err("%s: Error! Uncleared put_buf_mask for pingpong(%d) from vfe %d bufq 0x%x buf_idx %d\n",
 			__func__, pingpong_bit, id, bufq_handle, buf_index);
-		msm_isp_dump_ping_pong_mismatch();
 		rc = -EFAULT;
 	}
 	spin_unlock_irqrestore(&bufq->bufq_lock, flags);
@@ -1287,40 +1285,39 @@ static int msm_isp_deinit_isp_buf_mgr(
 int msm_isp_proc_buf_cmd(struct msm_isp_buf_mgr *buf_mgr,
 	unsigned int cmd, void *arg)
 {
-	int rc = -EINVAL;
 	switch (cmd) {
 	case VIDIOC_MSM_ISP_REQUEST_BUF: {
 		struct msm_isp_buf_request *buf_req = arg;
 
-		rc = buf_mgr->ops->request_buf(buf_mgr, buf_req);
+		buf_mgr->ops->request_buf(buf_mgr, buf_req);
 		break;
 	}
 	case VIDIOC_MSM_ISP_ENQUEUE_BUF: {
 		struct msm_isp_qbuf_info *qbuf_info = arg;
 
-		rc = buf_mgr->ops->enqueue_buf(buf_mgr, qbuf_info);
+		buf_mgr->ops->enqueue_buf(buf_mgr, qbuf_info);
 		break;
 	}
 	case VIDIOC_MSM_ISP_DEQUEUE_BUF: {
 		struct msm_isp_qbuf_info *qbuf_info = arg;
 
-		rc = buf_mgr->ops->dequeue_buf(buf_mgr, qbuf_info);
+		buf_mgr->ops->dequeue_buf(buf_mgr, qbuf_info);
 		break;
 	}
 	case VIDIOC_MSM_ISP_RELEASE_BUF: {
 		struct msm_isp_buf_request *buf_req = arg;
 
-		rc = buf_mgr->ops->release_buf(buf_mgr, buf_req->handle);
+		buf_mgr->ops->release_buf(buf_mgr, buf_req->handle);
 		break;
 	}
 	case VIDIOC_MSM_ISP_UNMAP_BUF: {
 		struct msm_isp_unmap_buf_req *unmap_req = arg;
 
-		rc = buf_mgr->ops->unmap_buf(buf_mgr, unmap_req->fd);
+		buf_mgr->ops->unmap_buf(buf_mgr, unmap_req->fd);
 		break;
 	}
 	}
-	return rc;
+	return 0;
 }
 
 static int msm_isp_buf_mgr_debug(struct msm_isp_buf_mgr *buf_mgr,
