@@ -21,6 +21,13 @@
 #include "dsi-panel-r69006-1080p-video.dtsi"
 #include "dsi-panel-r69006-1080p-cmd.dtsi"
 #include "dsi-panel-truly-wuxga-video.dtsi"
+#include "dsi-panel-nt35596-tianma-fhd-video.dtsi"
+#include "dsi-panel-nt35532-fhd-video.dtsi"
+#include "dsi-panel-nt35596-fhd-video.dtsi"
+#include "dsi-panel-td4310-fhd-video.dtsi"
+#include "dsi-panel-otm1911-fhd-video.dtsi"
+#include "dsi-panel-ft8716-fhd-video.dtsi"
+#include "dsi-panel-ili7807-fhd-video.dtsi"
 
 &soc {
 	dsi_panel_pwr_supply: dsi_panel_pwr_supply {

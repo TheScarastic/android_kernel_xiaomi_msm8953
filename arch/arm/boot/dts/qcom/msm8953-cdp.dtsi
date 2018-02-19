@@ -293,7 +293,7 @@
 	pinctrl-0 = <&typec_ssmux_config>;
 };
 
-&pmi8950_charger {
+&pmi8940_charger {
 	qcom,external-typec;
 	qcom,typec-psy-name = "typec";
 };
