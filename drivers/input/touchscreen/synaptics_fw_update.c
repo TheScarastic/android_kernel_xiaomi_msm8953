@@ -1,7 +1,6 @@
 /*
  * Synaptics RMI4 touchscreen driver
  *
- * Copyright (C) 2012 Synaptics Incorporated
  *
  * Copyright (C) 2012 Alexandra Chin <alexandra.chin@tw.synaptics.com>
  * Copyright (C) 2012 Scott Lin <scott.lin@tw.synaptics.com>
