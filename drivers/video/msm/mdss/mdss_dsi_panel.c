@@ -33,6 +33,8 @@
 
 #define VSYNC_DELAY msecs_to_jiffies(17)
 
+extern int panel_suspend_reset_flag;
+
 DEFINE_LED_TRIGGER(bl_led_trigger);
 
 void mdss_dsi_panel_pwm_cfg(struct mdss_dsi_ctrl_pdata *ctrl)
@@ -339,6 +341,10 @@ disp_en_gpio_err:
 	return rc;
 }
 
+#ifdef CONFIG_XIAOMI_D2
+extern int ft8716_suspend;
+#endif
+
 int mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enable)
 {
 	struct mdss_dsi_ctrl_pdata *ctrl_pdata = NULL;
@@ -480,7 +486,26 @@ int mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enable)
 			gpio_set_value((ctrl_pdata->disp_en_gpio), 0);
 			gpio_free(ctrl_pdata->disp_en_gpio);
 		}
+#ifdef CONFIG_XIAOMI_D2
+		pr_debug("D2A set reset flag  \n ");
+		if (panel_suspend_reset_flag == 2 || (panel_suspend_reset_flag == 3 && ft8716_gesture_func_on == 0)
+			|| ft8716_suspend) {
+				pr_info("set rst \n");
+				gpio_set_value((ctrl_pdata->rst_gpio), 1);
+				msleep(10);
+				gpio_set_value((ctrl_pdata->rst_gpio), 0);
+				msleep(10);
+				gpio_set_value((ctrl_pdata->rst_gpio), 1);
+				msleep(10);
+				gpio_set_value((ctrl_pdata->rst_gpio), 0);
+				msleep(10);
+		} else if ((panel_suspend_reset_flag == 3) || (panel_suspend_reset_flag == 0))
+				gpio_set_value((ctrl_pdata->rst_gpio), 0);
+#else
+	if (panel_suspend_reset_flag == 0)
 		gpio_set_value((ctrl_pdata->rst_gpio), 0);
+#endif
+
 		gpio_free(ctrl_pdata->rst_gpio);
 		if (gpio_is_valid(ctrl_pdata->mode_gpio))
 			gpio_free(ctrl_pdata->mode_gpio);
@@ -1933,6 +1958,8 @@ static void mdss_dsi_parse_esd_params(struct device_node *np,
 				pr_err("TE-ESD not valid for video mode\n");
 				goto error;
 			}
+		} else if (!strcmp(string, "TE_check_NT35596")) {
+			ctrl->status_mode = ESD_TE_NT35596;
 		} else {
 			pr_err("No valid panel-status-check-mode string\n");
 			goto error;
