@@ -29,6 +29,9 @@ DEFINE_MSM_MUTEX(msm_actuator_mutex);
 #define PARK_LENS_LONG_STEP 7
 #define PARK_LENS_MID_STEP 5
 #define PARK_LENS_SMALL_STEP 3
+#define PARK_LENS_QUIET_UPPER_CODE 400
+#define PARK_LENS_QUIET_LOWER_CODE 50
+#define PARK_LENS_QUIET_STEP 50
 #define MAX_QVALUE 4096
 
 static struct v4l2_file_operations msm_actuator_v4l2_subdev_fops;
@@ -812,27 +815,21 @@ static int32_t msm_actuator_park_lens(struct msm_actuator_ctrl_t *a_ctrl)
 	next_lens_pos = a_ctrl->step_position_table[a_ctrl->curr_step_pos];
 	while (next_lens_pos) {
 		/* conditions which help to reduce park lens time */
-		if (next_lens_pos > (a_ctrl->park_lens.max_step *
-			PARK_LENS_LONG_STEP)) {
-			next_lens_pos = next_lens_pos -
-				(a_ctrl->park_lens.max_step *
-				PARK_LENS_LONG_STEP);
-		} else if (next_lens_pos > (a_ctrl->park_lens.max_step *
-			PARK_LENS_MID_STEP)) {
-			next_lens_pos = next_lens_pos -
-				(a_ctrl->park_lens.max_step *
-				PARK_LENS_MID_STEP);
-		} else if (next_lens_pos > (a_ctrl->park_lens.max_step *
-			PARK_LENS_SMALL_STEP)) {
-			next_lens_pos = next_lens_pos -
-				(a_ctrl->park_lens.max_step *
-				PARK_LENS_SMALL_STEP);
-		} else {
-			next_lens_pos = (next_lens_pos >
-				a_ctrl->park_lens.max_step) ?
-				(next_lens_pos - a_ctrl->park_lens.
-				max_step) : 0;
+		if (next_lens_pos > (PARK_LENS_QUIET_UPPER_CODE + 200))
+			next_lens_pos = PARK_LENS_QUIET_UPPER_CODE + 200;
+				else if (next_lens_pos > PARK_LENS_QUIET_UPPER_CODE)
+						next_lens_pos = PARK_LENS_QUIET_UPPER_CODE;
+		else {
+			if (next_lens_pos > (PARK_LENS_QUIET_LOWER_CODE * 2))
+				next_lens_pos -= PARK_LENS_QUIET_STEP * 2;
+			else if (next_lens_pos > 40)
+				next_lens_pos -= 40;
+			else if (next_lens_pos > 20)
+				next_lens_pos -= 20;
+			else
+				next_lens_pos = 0;
 		}
+
 		a_ctrl->func_tbl->actuator_parse_i2c_params(a_ctrl,
 			next_lens_pos, a_ctrl->park_lens.hw_params,
 			a_ctrl->park_lens.damping_delay);
@@ -851,7 +848,10 @@ static int32_t msm_actuator_park_lens(struct msm_actuator_ctrl_t *a_ctrl)
 		}
 		a_ctrl->i2c_tbl_index = 0;
 		/* Use typical damping time delay to avoid tick sound */
-		usleep_range(10000, 12000);
+		if (next_lens_pos > 100)
+			usleep_range(5000, 6000);
+		else
+			usleep_range(10000, 12000);
 	}
 
 	return 0;
