@@ -174,8 +174,12 @@
 			mpp@a000 {
 				reg = <0xa000 0x100>;
 				qcom,pin-num = <1>;
-				status = "disabled";
-			};
+				qcom,mode = <4>; /* AIN input */
+				qcom,invert = <1>; /* Enable MPP */
+				com,ain-route = <0>; /* AMUX 5 */
+				qcom,master-en = <1>;
+				qcom,src-sel = <0>; /* Function constant */
+				status = "okay";			};
 
 			mpp@a100 {
 				reg = <0xa100 0x100>;
@@ -202,12 +206,13 @@
 			#address-cells = <1>;
 			#size-cells = <1>;
 
-			qcom,iterm-ma = <100>;
-			qcom,float-voltage-mv = <4200>;
-			qcom,resume-delta-mv = <200>;
+			qcom,iterm-ma = <200>;
+			qcom,float-voltage-mv = <4380>;
+			qcom,resume-delta-mv = <50>;
 			qcom,chg-inhibit-fg;
 			qcom,rparasitic-uohm = <100000>;
 			qcom,bms-psy-name = "bms";
+			qcom,charge-unknown-battery;
 			qcom,thermal-mitigation = <1500 700 600 0>;
 			qcom,parallel-usb-min-current-ma = <1400>;
 			qcom,parallel-usb-9v-min-current-ma = <900>;
@@ -215,7 +220,9 @@
 			qcom,pmic-revid = <&pmi8950_revid>;
 			qcom,force-aicl-rerun;
 			qcom,aicl-rerun-period-s = <180>;
-			qcom,autoadjust-vfloat;
+			qcom,override-usb-current;
+			qcom,fastchg-current-comp = <900>;
+			qcom,float-voltage-comp = <15>;
 
 			qcom,chgr@1000 {
 				reg = <0x1000 0x100>;
@@ -317,16 +324,19 @@
 			compatible = "qcom,qpnp-fg";
 			#address-cells = <1>;
 			#size-cells = <1>;
-			qcom,resume-soc = <95>;
+			qcom,resume-soc-raw = <254>;
 			status = "okay";
 			qcom,bcl-lm-threshold-ma = <127>;
 			qcom,bcl-mh-threshold-ma = <405>;
-			qcom,fg-iterm-ma = <150>;
-			qcom,fg-chg-iterm-ma = <100>;
+			qcom,fg-iterm-ma = <300>;
+			qcom,fg-chg-iterm-ma = <200>;
 			qcom,pmic-revid = <&pmi8950_revid>;
-			qcom,fg-cutoff-voltage-mv = <3500>;
+			qcom,fg-cutoff-voltage-mv = <3400>;
 			qcom,cycle-counter-en;
+			qcom,hold-soc-while-full;
 			qcom,capacity-learning-on;
+			qcom,fg-cc-cv-threshold-mv =<4350>;
+			qcom,vbat-estimate-diff-mv = <250>;
 
 			qcom,fg-soc@4000 {
 			status = "okay";
@@ -529,6 +539,7 @@
 			qcom,sync-dly-us = <800>;
 			qcom,fs-curr-ua = <20000>;
 			qcom,led-strings-list = [00 01];
+			qcom,en-cabc;
 			qcom,en-ext-pfet-sc-pro;
 			qcom,cons-sync-write-delay-us = <1000>;
 		};
