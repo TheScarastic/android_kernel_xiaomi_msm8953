@@ -45,6 +45,9 @@ static struct mdss_dsi_data *mdss_dsi_res;
 
 static struct pm_qos_request mdss_dsi_pm_qos_request;
 
+int panel_suspend_reset_flag = 0;
+int panel_suspend_power_flag = 0;
+
 static void mdss_dsi_pm_qos_add_request(struct mdss_dsi_ctrl_pdata *ctrl_pdata)
 {
 	struct irq_info *irq_info;
@@ -272,7 +275,11 @@ static int mdss_dsi_regulator_init(struct platform_device *pdev,
 	return rc;
 }
 
-static int mdss_dsi_panel_power_off(struct mdss_panel_data *pdata)
+extern int ft8716_suspend;
+extern int  ft8716_gesture_func_on;
+int acc_vreg = 0;
+
+int mdss_dsi_panel_power_off(struct mdss_panel_data *pdata)
 {
 	int ret = 0;
 	struct mdss_dsi_ctrl_pdata *ctrl_pdata = NULL;
@@ -295,12 +302,29 @@ static int mdss_dsi_panel_power_off(struct mdss_panel_data *pdata)
 	if (mdss_dsi_pinctrl_set_state(ctrl_pdata, false))
 		pr_debug("reset disable: pinctrl not enabled\n");
 
-	ret = msm_dss_enable_vreg(
+	if ((panel_suspend_power_flag != 3) && acc_vreg) {
+		ret = msm_dss_enable_vreg(
 		ctrl_pdata->panel_power_data.vreg_config,
 		ctrl_pdata->panel_power_data.num_vreg, 0);
-	if (ret)
-		pr_err("%s: failed to disable vregs for %s\n",
+		acc_vreg--;
+		pr_debug("SXF set 5V low : panel_suspend_power_flag : %d acc_vreg : %d\n", panel_suspend_power_flag, acc_vreg);
+
+		if (ret)
+			pr_err("%s: failed to disable vregs for %s\n",
 			__func__, __mdss_dsi_pm_name(DSI_PANEL_PM));
+	} else {
+		if (!ft8716_gesture_func_on && ft8716_suspend && acc_vreg) {
+			ret = msm_dss_enable_vreg(
+					ctrl_pdata->panel_power_data.vreg_config,
+					ctrl_pdata->panel_power_data.num_vreg, 0);
+			pr_debug("set 5V low : panel_suspend_power_flag : %d acc_vreg : %d\n", panel_suspend_power_flag, acc_vreg);
+			acc_vreg--;
+			pr_debug("%s acc_vreg : %d\n", __func__, acc_vreg);
+			if (ret)
+				pr_err("%s: failed to disable vregs for %s\n",
+					 __func__, __mdss_dsi_pm_name(DSI_PANEL_PM));
+		}
+	}
 
 end:
 	return ret;
@@ -319,13 +343,17 @@ static int mdss_dsi_panel_power_on(struct mdss_panel_data *pdata)
 	ctrl_pdata = container_of(pdata, struct mdss_dsi_ctrl_pdata,
 				panel_data);
 
-	ret = msm_dss_enable_vreg(
+	if (!acc_vreg) {
+		ret = msm_dss_enable_vreg(
 		ctrl_pdata->panel_power_data.vreg_config,
 		ctrl_pdata->panel_power_data.num_vreg, 1);
-	if (ret) {
-		pr_err("%s: failed to enable vregs for %s\n",
-			__func__, __mdss_dsi_pm_name(DSI_PANEL_PM));
-		return ret;
+		acc_vreg++ ;
+		pr_debug("%s SXF acc_vreg : %d\n", __func__, acc_vreg);
+		if (ret) {
+			pr_err("%s: failed to enable vregs for %s\n",
+				__func__, __mdss_dsi_pm_name(DSI_PANEL_PM));
+			return ret;
+		}
 	}
 
 	/*
@@ -2893,6 +2921,17 @@ static struct device_node *mdss_dsi_find_panel_of_node(
 		if (!strcmp(panel_name, NONE_PANEL))
 			goto exit;
 
+		if (!strcmp(panel_name, "qcom,mdss_dsi_td4310_fhd_video")) {
+			panel_suspend_reset_flag = 1;
+			panel_suspend_power_flag = 1;
+		} else if (!strcmp(panel_name, "qcom,mdss_dsi_otm1911_fhd_video")) {
+			panel_suspend_reset_flag = 2;
+			panel_suspend_power_flag = 2;
+		} else if (!strcmp(panel_name, "qcom,mdss_dsi_ft8716_fhd_video")) {
+			panel_suspend_reset_flag = 3;
+			panel_suspend_power_flag = 3;
+		}
+
 		mdss_node = of_parse_phandle(pdev->dev.of_node,
 			"qcom,mdss-mdp", 0);
 		if (!mdss_node) {
@@ -3167,6 +3206,8 @@ end:
 	return rc;
 }
 
+struct mdss_panel_data *panel_data;
+
 static int mdss_dsi_ctrl_probe(struct platform_device *pdev)
 {
 	int rc = 0;
@@ -3259,6 +3300,8 @@ static int mdss_dsi_ctrl_probe(struct platform_device *pdev)
 	} else {
 		ctrl_pdata->bklt_ctrl = UNKNOWN_CTRL;
 	}
+
+	panel_data = &ctrl_pdata->panel_data;
 
 	rc = dsi_panel_device_register(pdev, dsi_pan_node, ctrl_pdata);
 	if (rc) {
