@@ -388,11 +388,6 @@ static irqreturn_t ft5435_ts_interrupt(int irq, void *dev_id)
 			break;
 		input_mt_slot(ip_dev, id);
 
-		if (status==FT_TOUCH_DOWN)
-			printk("[FTS]Down pid[%d]:[%d,%d]\n",id,x,y);
-		else if (status==1)
-			printk("[FTS]Up pid[%d]:[%d,%d]\n",id,x,y);
-
 		if ( x < data->pdata->panel_maxx && y < data->pdata->panel_maxy ) {
 			input_mt_slot(ip_dev, id);
 			if (status == FT_TOUCH_DOWN || status == FT_TOUCH_CONTACT) {
