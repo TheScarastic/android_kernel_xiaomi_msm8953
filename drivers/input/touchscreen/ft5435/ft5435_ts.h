@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2010  Focal tech Ltd.
  * Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2017 XiaoMi, Inc.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -23,14 +24,34 @@
 #define FT5X36_ID		0x14
 #define FT6X06_ID		0x06
 #define FT6X36_ID       0x36
+/* [PLATFORM]-Mod-BEGIN by TCTNB.YQJ, FR797197, 2014/11/28 add for tp gesture  */
+
+#define SET_COVER_MODE
+#define FOCALTECH_AUTO_UPGRADE		0
+#define FOCALTECH_LOCK_DOWN_INFO	1
+#define FOCALTECH_TP_GESTURE
+#define FOCALTECH_FAE_MOD
+
+#define USB_CHARGE_DETECT
+#define FOCALTECH_ITO_TEST			1
 #define FOCALTECH_MAX_VKEY_NUM 3
 
+struct fw_upgrade_info {
+	bool auto_cal;
+	u16 delay_aa;
+	u16 delay_55;
+	u8 upgrade_id_1;
+	u8 upgrade_id_2;
+	u16 delay_readid;
+	u16 delay_erase_flash;
+};
 struct virkey{
 	int keycode;
 	int x;
 	int y;
 };
 struct ft5435_ts_platform_data {
+	struct fw_upgrade_info info;
 	const char *name;
 	const char *fw_name;
 	u32 irqflags;
@@ -60,5 +81,13 @@ struct ft5435_ts_platform_data {
 	int (*power_on) (bool);
 	int num_virkey;
 	struct virkey vkeys[FOCALTECH_MAX_VKEY_NUM];
+};
+struct ft5435_rawdata_test_result {
+	int result;
+	int min_limited_value;
+	int max_limited_value;
+	int min_value;
+	int max_value;
+	int index[350][3];
 };
 #endif
